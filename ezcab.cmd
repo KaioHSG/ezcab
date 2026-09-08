@@ -2,28 +2,24 @@
 setlocal
 chcp 65001 >nul
 
-set version=1.0
+set version=1.1
+
 echo EZCab [version %version%]
 echo.
 
 set "switch=%~1"
-if /i "%switch%"=="/c"  goto :mkcab
-if /i "%switch%"=="/s"  goto :mkscript
-if /i "%switch%"=="/x"  goto :excab
-if /i "%switch%"=="/l"  goto :listcab
-if /i "%switch%"=="/?"  goto :help
-if /i "%switch%"==""    goto :help
+if /i "%switch%"=="/c" goto :mkcab
+if /i "%switch%"=="/s" goto :mkscript
+if /i "%switch%"=="/x" goto :excab
+if /i "%switch%"=="/l" goto :listcab
+if /i "%switch%"=="/?" goto :help
+if /i "%switch%"=="" goto :help
 
 echo ERROR. Invalid switch: "%switch%" >&2
 endlocal
 exit /b 2
 
-
-
-
-
 :help
-
 echo Usage:
 echo.
 echo EZCAB /C [/T:{MSZIP^|LZX^|NONE}] source [output]
@@ -31,37 +27,35 @@ echo EZCAB /S [/T:{MSZIP^|LZX^|NONE}] [/L:launcher] [/G] [/H:title] source [outp
 echo EZCAB /X file [extract]
 echo EZCAB /L file
 echo.
-echo   /C       Compress a file or folder into a CAB archive.
-echo   /S       Compress a file or folder into a Self-Extracting CMD script.
-echo   /X       Extract the contents of a CAB archive or a self-extracting CMD.
-echo   /L       List the contents of a CAB archive without extracting.
+echo   /C        Compress a file or folder into a CAB archive.
+echo   /S        Compress a file or folder into a Self-Extracting CMD script.
+echo   /X        Extract the contents of a CAB archive or a self-extracting CMD.
+echo   /L        List the contents of a CAB archive without extracting.
 echo.
-echo   /T:type  Compression types: "MSZIP" (default), "LZX" (better compression)
-echo            or "NONE".
-echo   /L:file  Entry-point script inside the bundle (default: "start.cmd").
-echo   /G       Hide the console window (GUI mode).
-echo   /H:text  Title of the console window.
+echo   /T:type   Compression types: "MSZIP" (default), "LZX" (better compression)
+echo             or "NONE".
+echo   /L:file   Entry-point script inside the bundle (default: "start.cmd").
+echo   /G        Hide the console window (GUI mode).
+echo   /H:text   Title of the console window.
 echo.
-echo   source   File or directory you want to compress.
-echo   output   Path or name of the resulting CAB file.
-echo   file     Path to the CAB archive you want to read or extract.
-echo   extract  Destination folder for extracted files (defaults to current
-echo            directory).
+echo   source    File or directory you want to compress.
+echo   output    Path or name of the resulting CAB file.
+echo   file      Path to the CAB archive you want to read or extract.
+echo   extract   Destination folder for extracted files (defaults to current
+echo             directory).
 echo.
 echo EZCAB /C /T:LZX "My File.txt" "My CAB"
+echo EZCAB /C /T:LZX "My Folder\*" "My CAB"
 echo EZCAB /S /T:LZX /L:"App Launcher.exe" /G /H:"My App" "App Src" "My Script"
-echo EZCAB /X "My CAB.cab" "My Folder\Documents"
+echo EZCAB /X "My CAB.cab" "My Folder\New Files"
+echo EZCAB /X "My Script.cmd" "Scripts Folder"
 echo EZCAB /L "My CAB.cab"
+echo EZCAB /L "My Script.cmd"
 
 endlocal
 exit /b 0
 
-
-
-
-
 :mkcab
-
 set type=MSZIP
 set compress=ON
 set "source=%~2"
@@ -170,25 +164,20 @@ if exist "%source%\" (
 
 makecab /f "%temp%\ezcab\%ddf%"
 if errorlevel 1 (
-    del /q "setup.inf" "setup.rpt"
+    del /q "setup.inf" "setup.rpt" 2>nul
     endlocal
     exit /b %errorlevel%
 )
 
-del /q "setup.inf" "setup.rpt" "%temp%\ezcab\%ddf%" "%temp%\ezcab\%ddf%"
+del /q "setup.inf" "setup.rpt" "%temp%\ezcab\%ddf%" 2>nul
 popd
 
-move /y %drive%\%tempcab% "%dest%" >nul
+move /y "%drive%\%tempcab%" "%dest%" >nul
 
 endlocal
 exit /b 0
 
-
-
-
-
 :mkscript
-
 set type=MSZIP
 set compress=ON
 set "launcher=start.cmd"
@@ -205,8 +194,8 @@ if /i "%a%"=="/t:none" set compress=OFF& shift& goto :parsemk
 if /i "%a:~0,3%"=="/l:" set "launcher=%a:~3%"& shift& goto :parsemk
 if /i "%a%"=="/g" set gui=true& shift& goto :parsemk
 if /i "%a:~0,3%"=="/h:" set "title=%a:~3%"& shift& goto :parsemk
-:parsemkd
 
+:parsemkd
 set "source=%~2"
 set "output=%~3"
 
@@ -318,12 +307,7 @@ del /q "%source%\setup.inf" "%source%\setup.rpt" 2>nul
 endlocal
 exit /b 0
 
-
-
-
-
 :excab
-
 set "file=%~2"
 set "extract=%~3"
 
@@ -372,12 +356,7 @@ if errorlevel 1 (
 endlocal
 exit /b 0
 
-
-
-
-
 :listcab
-
 set "file=%~2"
 
 if not exist "%file%" (
@@ -386,7 +365,7 @@ if not exist "%file%" (
     exit /b 2
 )
 
-findstr /b /c:"-----BEGIN CERTIFICATE-----" "%file%" >nul 2>&1
+findstr /b /c:"::ezcab-" "%file%" >nul 2>&1
 if errorlevel 1 goto :listcab_direct
 
 set "workdir=%temp%\ezcab-ls"
