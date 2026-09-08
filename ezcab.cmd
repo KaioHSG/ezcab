@@ -320,7 +320,7 @@ if not exist "%file%" (
 if "%extract%"=="" (set "dest=%cd%") else (set "dest=%extract%")
 if not exist "%dest%" mkdir "%dest%"
 
-findstr /b /c:"-----BEGIN CERTIFICATE-----" "%file%" >nul 2>&1
+findstr /b /c:"::ezcab-" "%file%" >nul 2>&1
 if errorlevel 1 goto :excab_direct
 
 set "workdir=%temp%\ezcab-ex"
