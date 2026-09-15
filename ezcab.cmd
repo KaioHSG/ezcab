@@ -373,17 +373,21 @@ set "workdir=%temp%\ezcab-ls"
 if exist "%workdir%" rd /s /q "%workdir%"
 md "%workdir%"
 
-set "cabpath=%~dp2"
-set "cabpath=%cabpath::=%"
-
+set "cabpath="
 for %%a in ("%file%") do set "cabfile=%%~nxa"
+if not "%file%"=="%cabfile%" call set "cabpath=%%file:%~nx2=%%"
+if not "%cabpath%"=="" set "cabpath=%cabpath::=%"
 
 if not "%cabpath%"=="" (
     if exist "%workdir%\%cabpath%" rd /s /q "%workdir%\%cabpath%"
     md "%workdir%\%cabpath%"
 )
 
-certutil -decode "%file%" "%workdir%\%cabpath%\%cabfile%" 2>&1
+if "%cabpath%"=="" (
+    certutil -decode "%file%" "%workdir%\%cabfile%" 2>&1
+) else (
+    certutil -decode "%file%" "%workdir%\%cabpath%\%cabfile%" 2>&1
+)
 if errorlevel 1 (
     rd /s /q "%workdir%"
     echo ERROR. Failed to decode embedded CAB. >&2
@@ -392,7 +396,11 @@ if errorlevel 1 (
 )
 
 pushd "%workdir%"
-expand "%cabpath%%cabfile%" /d
+if "%cabpath%"=="" (
+    expand "%cabfile%" /d
+) else (
+    expand "%cabpath%%cabfile%" /d
+)
 popd
 rd /s /q "%workdir%"
 endlocal
