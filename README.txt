@@ -1,4 +1,4 @@
-EZCab [version 1.1]
+EZCab [version 1.2]
 
 Usage:
 

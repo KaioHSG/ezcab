@@ -2,7 +2,7 @@
 setlocal
 chcp 65001 >nul
 
-set version=1.1
+set version=1.2
 
 echo EZCab [version %version%]
 echo.
@@ -376,12 +376,15 @@ md "%workdir%"
 call set "cabpath=%%file:%~nx2=%%"
 set "cabpath=%cabpath::=%"
 
-if exist "%workdir%\%cabpath%" rd /s /q "%workdir%\%cabpath%"
-md "%workdir%\%cabpath%"
-
 for %%a in ("%file%") do set "cabfile=%%~nxa"
 
-certutil -decode "%file%" "%workdir%\%cabpath%\%cabfile%" 2>&1
+if "%cabpath%"=="" (
+    certutil -decode "%file%" "%workdir%\%cabfile%" 2>&1
+) else (
+    if exist "%workdir%\%cabpath%" rd /s /q "%workdir%\%cabpath%"
+    md "%workdir%\%cabpath%"
+    certutil -decode "%file%" "%workdir%\%cabpath%\%cabfile%" 2>&1
+)
 if errorlevel 1 (
     rd /s /q "%workdir%"
     echo ERROR. Failed to decode embedded CAB. >&2
@@ -390,7 +393,11 @@ if errorlevel 1 (
 )
 
 pushd "%workdir%"
-expand "%cabpath%%cabfile%" /d
+if "%cabpath%"=="" (
+    expand "%cabfile%" /d
+) else (
+    expand "%cabpath%%cabfile%" /d
+)
 popd
 rd /s /q "%workdir%"
 endlocal
